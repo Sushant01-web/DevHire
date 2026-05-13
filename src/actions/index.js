@@ -408,7 +408,7 @@ export async function updateProfile(data, pathToRevalidate) {
 
 // Creating Action for strip price id based on their membership selection
 const stripe = require("stripe")(
-  "sk_test_51T01eQC1X6idCxlrBS5kMTGQl1T5yHR6hOT086aWgGCEAdROj1etmAlSMJJBX4xaqknEBbWVzRNYxwLVLWWd7fgS00OEx9ITCR"
+  process.env.STRIPE_URL
 )
 
 export async function createPrice(data) {
