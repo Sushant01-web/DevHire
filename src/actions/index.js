@@ -408,7 +408,7 @@ export async function updateProfile(data, pathToRevalidate) {
 
 // Creating Action for strip price id based on their membership selection
 const stripe = require("stripe")(
-  process.env.STRIPE_URL
+  "sk_test_51T01eQC1X6idCxlrBS5kMTGQl1T5yHR6hOT086aWgGCEAdROj1etmAlSMJJBX4xaqknEBbWVzRNYxwLVLWWd7fgS00OEx9ITCR"
 )
 
 export async function createPrice(data) {
@@ -436,8 +436,8 @@ export async function createStripePayment(data) {
     payment_method_types: ['card'],
     line_items: data?.lineItems,
     mode: 'subscription',
-    success_url: `${process.env.URL}/membership?status=success`,
-    cancel_url: `${process.env.URL}/membership?status=cancel`,
+    success_url: `${process.env.LOCALURL}/membership?status=success`,
+    cancel_url: `${process.env.LOCALURL}/membership?status=cancel`,
   })
 
   return {
