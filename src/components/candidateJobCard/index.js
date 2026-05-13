@@ -65,26 +65,25 @@ export default function CandidateJobCard({ jobItem, profileInfo, jobApplication 
                         </DrawerTrigger>
                     }
                 />
-
-                <DrawerContent className="w-full max-w-7xl mx-auto rounded-t-2xl p-0 overflow-hidden bg-white">
+                <DrawerContent className="w-full max-w-7xl mx-auto rounded-t-2xl bg-white p-0 max-h-[90vh] overflow-y-auto">
 
                     {/* Header */}
-                    <DrawerHeader className="px-6 py-5 border-b bg-gray-50">
+                    <DrawerHeader className="px-4 md:px-6 py-5 border-b bg-gray-50">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-                            {/* Title */}
-                            <DrawerTitle className="text-2xl md:text-3xl font-bold leading-tight">
+                            <DrawerTitle className="text-xl md:text-3xl font-bold leading-tight">
                                 {jobItem?.title}
                             </DrawerTitle>
 
-                            {/* Buttons */}
-                            <div className="flex gap-3">
+                            <div className="flex flex-wrap gap-3">
                                 <Button
                                     onClick={handleApplyJob}
                                     className="disabled:opacity-65 h-10 px-5 rounded-lg bg-black text-white hover:bg-gray-800 transition"
-                                    disabled={jobApplication.findIndex(item => item.jobId === jobItem?._id) > -1 ? true : false}>
+                                    disabled={jobApplication.findIndex(item => item.jobId === jobItem?._id) > -1}>
                                     {
-                                        jobApplication.findIndex(item => item.jobId === jobItem?._id) > -1 ? 'Applied' : 'Apply'
+                                        jobApplication.findIndex(item => item.jobId === jobItem?._id) > -1
+                                            ? 'Applied'
+                                            : 'Apply'
                                     }
                                 </Button>
 
@@ -96,57 +95,52 @@ export default function CandidateJobCard({ jobItem, profileInfo, jobApplication 
                                     Cancel
                                 </Button>
                             </div>
-
                         </div>
                     </DrawerHeader>
 
                     {/* Body */}
-                    <div className="px-6 py-6 space-y-5">
-
-                        {/* Description */}
-                        <DrawerDescription className="text-base md:text-lg text-gray-800 leading-relaxed">
+                    <div className="px-4 md:px-6 py-5 space-y-5">
+                        <DrawerDescription className="text-sm md:text-lg text-gray-800 leading-relaxed">
                             {jobItem?.description}
                         </DrawerDescription>
 
-                        {/* Meta Info */}
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-800">
+                        <div className="flex flex-wrap items-center gap-4 text-gray-800">
 
-                            <h3 className="flex items-center gap-1 text-2xl font-semibold">
+                            <h3 className="flex items-center gap-1 text-lg md:text-2xl font-semibold wrap-break-word">
                                 📍 {jobItem?.jobLocation}
                             </h3>
 
-                            {/* Optional extras (add if available) */}
                             {jobItem?.companyName && (
-                                <span className="flex items-center gap-1 text-2xl font-semibold">
+                                <span className="flex items-center gap-1 text-lg md:text-2xl font-semibold wrap-break-word">
                                     🏢 {jobItem.companyName}
                                 </span>
                             )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-800">
+
+                        <div className="flex flex-wrap items-center gap-4 text-gray-800">
                             {jobItem?.jobType && (
-                                <span className="flex items-center gap-1 text-xl">
+                                <span className="flex items-center gap-1 text-base md:text-xl wrap-break-word">
                                     Job Type - {jobItem.jobType}
                                 </span>
                             )}
-
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-800">
+
+                        <div className="flex flex-wrap items-center gap-4 text-gray-800">
                             {jobItem?.skills && (
-                                <span className="flex items-center gap-1 text-xl">
+                                <span className="flex items-center gap-1 text-base md:text-xl wrap-break-word">
                                     Skills - {jobItem.skills}
                                 </span>
                             )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-800">
+
+                        <div className="flex flex-wrap items-center gap-4 text-gray-800">
                             {jobItem?.experience && (
-                                <span className="flex items-center gap-1 text-xl">
+                                <span className="flex items-center gap-1 text-base md:text-xl wrap-break-word">
                                     Experience - {jobItem.experience}
                                 </span>
                             )}
                         </div>
-
                     </div>
-
                 </DrawerContent>
             </Drawer>
         </Fragment>
