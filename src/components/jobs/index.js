@@ -7,33 +7,37 @@ import { filterMenuData, formURLQuery } from "@/utils";
 import CandidateJobCard from "../candidateJobCard";
 import PostNewJob from "../postJob";
 import RecruiterJobCard from "../recruiterJobCard";
+
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger,} from "../ui/menubar";
 import { Label } from "../ui/label";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Sparkles, BriefcaseBusiness, Building2, Users,} from "lucide-react";
 
-export default function JobComponent({ profileInfo, jobList, jobApplication, fetchFilterCategories,}) {
+import { Sparkles, BriefcaseBusiness, Building2, Users, ChevronLeft, ChevronRight,} from "lucide-react";
 
+export default function JobComponent({ profileInfo, jobList, jobApplication, fetchFilterCategories }) {
   const [filterParams, setFilterParams] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+
   const searchParams = useSearchParams();
 
-  // Using for Rediret
+  // Using for Redirect
   const router = useRouter();
+
+  // PAGINATION LIMIT
+  const JOBS_PER_PAGE = 9;
 
   // Handle Filters
   function handleFilter(getSectionId, getCurrentOption) {
     let copyFilterParams = { ...filterParams };
-    const indexOfCurrentSection =
-      Object.keys(copyFilterParams).indexOf(getSectionId);
+
+    const indexOfCurrentSection = Object.keys(copyFilterParams).indexOf(getSectionId);
 
     if (indexOfCurrentSection === -1) {
-
       copyFilterParams = {
         ...copyFilterParams,
         [getSectionId]: [getCurrentOption],
       };
-
     } else {
       const indexOfCurrentOption = copyFilterParams[getSectionId].indexOf(getCurrentOption);
 
@@ -41,10 +45,19 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
         copyFilterParams[getSectionId].push(getCurrentOption);
       } else {
         copyFilterParams[getSectionId].splice(indexOfCurrentOption, 1);
+
+        // Remove empty filter arrays
+        if (copyFilterParams[getSectionId].length === 0) {
+          delete copyFilterParams[getSectionId];
+        }
       }
     }
 
     setFilterParams(copyFilterParams);
+
+    // Reset to first page on filter change
+    setCurrentPage(1);
+
     // Setting filters to session storage
     sessionStorage.setItem(
       "filterParams",
@@ -64,6 +77,7 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
   // Restore Filters
   useEffect(() => {
     const stored = sessionStorage.getItem("filterParams");
+
     if (stored) {
       setFilterParams(JSON.parse(stored));
     }
@@ -72,6 +86,7 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
   // Push Filters to URL
   useEffect(() => {
     if (!filterParams || Object.keys(filterParams).length === 0) return;
+
     const url = formURLQuery({
       params: searchParams.toString(),
       dataToAdd: filterParams,
@@ -82,9 +97,29 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
     }
   }, [filterParams]);
 
+  // PAGINATED JOBS
+  const paginatedJobs = useMemo(() => {
+    const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
+    const endIndex = startIndex + JOBS_PER_PAGE;
+
+    return jobList?.slice(startIndex, endIndex);
+  }, [jobList, currentPage]);
+
+  // TOTAL PAGES
+  const totalPages = Math.ceil((jobList?.length || 0) / JOBS_PER_PAGE);
+
+  // PAGE CHANGE
+  function handlePageChange(page) {
+    setCurrentPage(page);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
   return (
     <div className="w-full">
-
       {/* TOP SECTION */}
       <div className="bg-white/70 backdrop-blur-xl border border-white shadow-xl rounded-[32px] p-6 lg:p-10">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
@@ -101,41 +136,37 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
 
             {/* Heading */}
             <h1 className="mt-5 text-3xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
-              {
-                profileInfo?.role === "candidate"
-                  ? "Explore All Jobs"
-                  : "Manage Your Jobs Dashboard"
-              }
+              {profileInfo?.role === "candidate"
+                ? "Explore All Jobs"
+                : "Manage Your Jobs Dashboard"}
             </h1>
 
             {/* Description */}
             <p className="mt-4 text-gray-600 text-lg max-w-2xl leading-relaxed">
-              {
-                profileInfo?.role === "candidate"
-                  ? "Discover premium opportunities from top companies and apply with ease."
-                  : "Track job postings, applications, and hiring activities from one place."
-              }
+              {profileInfo?.role === "candidate"
+                ? "Discover premium opportunities from top companies and apply with ease."
+                : "Track job postings, applications, and hiring activities from one place."}
             </p>
 
-            {/* PoST JOB */}
+            {/* POST JOB */}
             <div className="mt-8 flex flex-col md:flex-row items-center gap-4">
-              {
-                profileInfo?.role !== "candidate" && (
-                  <PostNewJob
-                    profileInfo={profileInfo}
-                    jobList={jobList}
-                  />
-                )
-              }
+              {profileInfo?.role !== "candidate" && (
+                <PostNewJob
+                  profileInfo={profileInfo}
+                  jobList={jobList}
+                />
+              )}
             </div>
 
             {/* STATS */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mt-10">
               <div className="bg-white shadow-md border border-gray-100 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
                 <BriefcaseBusiness className="text-blue-600 mb-3" />
+
                 <h2 className="text-3xl font-bold text-gray-900">
                   {jobList?.length || 0}+
                 </h2>
+
                 <p className="text-sm text-gray-500 mt-1">
                   Available Jobs
                 </p>
@@ -143,9 +174,11 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
 
               <div className="bg-white shadow-md border border-gray-100 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
                 <Building2 className="text-indigo-600 mb-3" />
+
                 <h2 className="text-3xl font-bold text-gray-900">
                   10+
                 </h2>
+
                 <p className="text-sm text-gray-500 mt-1">
                   Companies
                 </p>
@@ -153,9 +186,11 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
 
               <div className="bg-white shadow-md border border-gray-100 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
                 <Users className="text-pink-600 mb-3" />
+
                 <h2 className="text-3xl font-bold text-gray-900">
                   200+
                 </h2>
+
                 <p className="text-sm text-gray-500 mt-1">
                   Candidates
                 </p>
@@ -163,9 +198,11 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
 
               <div className="bg-white shadow-md border border-gray-100 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
                 <Sparkles className="text-yellow-500 mb-3" />
+
                 <h2 className="text-3xl font-bold text-gray-900">
                   98%
                 </h2>
+
                 <p className="text-sm text-gray-500 mt-1">
                   Success Rate
                 </p>
@@ -183,7 +220,6 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
 
             {/* Floating Card */}
             <div className="absolute -bottom-5 left-5 bg-white shadow-2xl rounded-2xl p-4 hidden lg:flex items-center gap-4 border border-gray-100">
-
               <div className="w-12 h-12 rounded-full bg-linear-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white">
                 <BriefcaseBusiness />
               </div>
@@ -203,123 +239,169 @@ export default function JobComponent({ profileInfo, jobList, jobApplication, fet
       </div>
 
       {/* FILTERS */}
-      {
-        profileInfo?.role === "candidate" && (
-          <div className="mt-8 bg-white/70 backdrop-blur-xl border border-white shadow-xl rounded-3xl p-5">
-            <div className="flex flex-wrap items-center gap-4">
-              {
-                filterMenu.map((filterItem) => (
-                  <Menubar
-                    key={filterItem.id}
-                    className="border-none bg-transparent p-0"
-                  >
-                    <MenubarMenu>
-                      <MenubarTrigger className="bg-linear-to-r from-blue-600 to-indigo-600 text-white border-none rounded-xl px-5 py-3 hover:scale-105 transition shadow-lg cursor-pointer">
-                        {filterItem.name}
-                      </MenubarTrigger>
-                      <MenubarContent className="rounded-2xl shadow-2xl border border-gray-100 p-3">
-                        {
-                          filterItem.options.map((option, optionIndx) => (
-                            <MenubarItem
-                              key={optionIndx}
-                              className="flex items-center py-3 rounded-xl hover:bg-blue-50 cursor-pointer transition"
-                              onClick={() =>
-                                handleFilter(filterItem.id, option)
-                              }
-                            >
-                              <div
-                                className={`h-5 w-5 rounded-md border-2 border-blue-600
-                                ${
-                                  filterParams &&
-                                  Object.keys(filterParams).length > 0 &&
-                                  filterParams[filterItem.id] &&
-                                  filterParams[filterItem.id].indexOf(option) > -1
-                                    ? "bg-blue-600"
-                                    : "bg-white"
-                                }`}
-                              />
-                              <Label className="ml-3 cursor-pointer text-sm font-medium text-gray-700">
-                                {option}
-                              </Label>
-                            </MenubarItem>
-                          ))
+      {profileInfo?.role === "candidate" && (
+        <div className="mt-8 bg-white/70 backdrop-blur-xl border border-white shadow-xl rounded-3xl p-5">
+          <div className="flex flex-wrap items-center gap-4">
+            {filterMenu.map((filterItem) => (
+              <Menubar
+                key={filterItem.id}
+                className="border-none bg-transparent p-0"
+              >
+                <MenubarMenu>
+                  <MenubarTrigger className="bg-linear-to-r from-blue-600 to-indigo-600 text-white border-none rounded-xl px-5 py-3 hover:scale-105 transition shadow-lg cursor-pointer">
+                    {filterItem.name}
+                  </MenubarTrigger>
+
+                  <MenubarContent className="rounded-2xl shadow-2xl border border-gray-100 p-3">
+                    {filterItem.options.map((option, optionIndx) => (
+                      <MenubarItem
+                        key={optionIndx}
+                        className="flex items-center py-3 rounded-xl hover:bg-blue-50 cursor-pointer transition"
+                        onClick={() =>
+                          handleFilter(filterItem.id, option)
                         }
-                      </MenubarContent>
-                    </MenubarMenu>
-                  </Menubar>
-                ))
-              }
-            </div>
+                      >
+                        <div
+                          className={`h-5 w-5 rounded-md border-2 border-blue-600
+                          ${
+                            filterParams &&
+                            Object.keys(filterParams).length > 0 &&
+                            filterParams[filterItem.id] &&
+                            filterParams[filterItem.id].indexOf(option) > -1
+                              ? "bg-blue-600"
+                              : "bg-white"
+                          }`}
+                        />
+
+                        <Label className="ml-3 cursor-pointer text-sm font-medium text-gray-700">
+                          {option}
+                        </Label>
+                      </MenubarItem>
+                    ))}
+                  </MenubarContent>
+                </MenubarMenu>
+              </Menubar>
+            ))}
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* JOB LIST */}
       <div className="mt-10">
-        {
-          jobList && jobList.length > 0 ? (
+        {jobList && jobList.length > 0 ? (
+          <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {
-                jobList.map((jobItem) =>
-                  profileInfo?.role === "candidate" ? (
-                    <div
-                      key={jobItem._id}
-                      className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden"
-                    >
-                      {/* Top Gradient */}
-                      <div className="h-2 bg-linear-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+              {paginatedJobs.map((jobItem) =>
+                profileInfo?.role === "candidate" ? (
+                  <div
+                    key={jobItem._id}
+                    className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden"
+                  >
+                    {/* Top Gradient */}
+                    <div className="h-2 bg-linear-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
 
-                      <div className="p-1">
-                        <CandidateJobCard
-                          jobApplication={jobApplication}
-                          jobItem={jobItem}
-                          profileInfo={profileInfo}
-                        />
-                      </div>
+                    <div className="p-1">
+                      <CandidateJobCard
+                        jobApplication={jobApplication}
+                        jobItem={jobItem}
+                        profileInfo={profileInfo}
+                      />
                     </div>
+                  </div>
+                ) : (
+                  <div
+                    key={jobItem._id}
+                    className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="h-2 bg-linear-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
 
-                  ) : (
-
-                    <div
-                      key={jobItem._id}
-                      className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden"
-                    >
-
-                      <div className="h-2 bg-linear-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-
-                      <div className="p-1">
-                        <RecruiterJobCard
-                          jobApplication={jobApplication}
-                          jobItem={jobItem}
-                          profileInfo={profileInfo}
-                        />
-                      </div>
+                    <div className="p-1">
+                      <RecruiterJobCard
+                        jobApplication={jobApplication}
+                        jobItem={jobItem}
+                        profileInfo={profileInfo}
+                      />
                     </div>
-                  )
+                  </div>
                 )
-              }
+              )}
             </div>
 
-          ) : (
+            {/* PAGINATION */}
+            {totalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-14">
+                {/* PREVIOUS */}
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() =>
+                    handlePageChange(currentPage - 1)
+                  }
+                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-medium transition-all
+                  ${
+                    currentPage === 1
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-white shadow-md hover:shadow-xl hover:-translate-y-1"
+                  }`}
+                >
+                  <ChevronLeft size={18} />
+                  Prev
+                </button>
 
-            <div className="flex flex-col items-center justify-center py-24">
+                {/* PAGE NUMBERS */}
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <button
+                    key={index}
+                    onClick={() =>
+                      handlePageChange(index + 1)
+                    }
+                    className={`w-12 h-12 rounded-2xl font-semibold transition-all
+                    ${
+                      currentPage === index + 1
+                        ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-xl scale-105"
+                        : "bg-white text-gray-700 shadow-md hover:shadow-xl hover:-translate-y-1"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
 
-              <img
-                src="https://img.freepik.com/free-vector/no-data-concept-illustration_114360-536.jpg"
-                alt="No Jobs"
-                className="w-80 mb-8"
-              />
+                {/* NEXT */}
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    handlePageChange(currentPage + 1)
+                  }
+                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-medium transition-all
+                  ${
+                    currentPage === totalPages
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-white shadow-md hover:shadow-xl hover:-translate-y-1"
+                  }`}
+                >
+                  Next
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24">
+            <img
+              src="https://img.freepik.com/free-vector/no-data-concept-illustration_114360-536.jpg"
+              alt="No Jobs"
+              className="w-80 mb-8"
+            />
 
-              <h2 className="text-3xl font-bold text-gray-900">
-                No Jobs Found
-              </h2>
+            <h2 className="text-3xl font-bold text-gray-900">
+              No Jobs Found
+            </h2>
 
-              <p className="text-gray-500 mt-3 text-center max-w-md">
-                Try changing filters or search terms to discover more opportunities.
-              </p>
-            </div>
-          )
-        }
+            <p className="text-gray-500 mt-3 text-center max-w-md">
+              Try changing filters or search terms to discover more
+              opportunities.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
